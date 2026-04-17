@@ -24,8 +24,10 @@ import {
   serverTimestamp,
   deleteDoc
 } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { db, auth } from '@/lib/firebase';
+import { initializeApp, getApps, deleteApp } from 'firebase/app';
+import { createUserWithEmailAndPassword, getAuth as getSecondaryAuth } from 'firebase/auth';
+import firebaseConfig from '../../firebase-applet-config.json';
+import { db } from '@/lib/firebase';
 import { User, UserLevel } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -92,25 +94,34 @@ export default function PengaturanPengguna() {
     }
 
     setSubmitting(true);
+    let secondaryApp;
     try {
-      // Note: This environment doesn't support Firebase Admin SDK on client side
-      // For a real app, we'd use a Cloud Function to create users without logging out the current admin
-      // Here we'll just simulate the Firestore part or warn the user
+      // Create a secondary Firebase app to create the user without logging out current user
+      const secondaryAppName = `secondary-app-${Date.now()}`;
+      secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+      const secondaryAuth = getSecondaryAuth(secondaryApp);
+
+      // 1. Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        secondaryAuth, 
+        formData.email, 
+        formData.password
+      );
       
-      // In this specific AIS environment, we can't easily create other Auth users from client side
-      // without being logged out. We'll just save to Firestore for now and explain.
-      
-      const userId = formData.username; // Use username as ID for simplicity in this demo
-      await setDoc(doc(db, 'users', userId), {
+      const newUserId = userCredential.user.uid;
+
+      // 2. Save additional user data to Firestore using the UID
+      await setDoc(doc(db, 'users', newUserId), {
         email: formData.email,
         nama: formData.nama,
         nip: formData.nip,
         username: formData.username,
         level: formData.level,
+        id: newUserId, // Store the UID in the document as well
         createdAt: serverTimestamp()
       });
 
-      toast.success("Data pengguna berhasil disimpan di database");
+      toast.success(`Akun ${formData.nama} berhasil dibuat dan sinkron dengan Authentication`);
       setIsDialogOpen(false);
       setFormData({
         email: '',
@@ -121,10 +132,19 @@ export default function PengaturanPengguna() {
         level: 'pegawai'
       });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving user:", error);
-      toast.error("Gagal menyimpan data pengguna");
+      let message = "Gagal menyimpan data pengguna";
+      if (error.code === 'auth/email-already-in-use') {
+        message = "Email sudah terdaftar di sistem Authentication";
+      } else if (error.code === 'auth/weak-password') {
+        message = "Password terlalu lemah (minimal 6 karakter)";
+      }
+      toast.error(message);
     } finally {
+      if (secondaryApp) {
+        await deleteApp(secondaryApp);
+      }
       setSubmitting(false);
     }
   };

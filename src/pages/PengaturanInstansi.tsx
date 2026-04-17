@@ -17,7 +17,7 @@ import {
   setDoc,
   serverTimestamp 
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { Instansi } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,6 +31,7 @@ export default function PengaturanInstansi() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Instansi>({
     nama: '',
@@ -65,12 +66,40 @@ export default function PengaturanInstansi() {
     }
 
     setSubmitting(true);
+    setUploadProgress(0);
     try {
+      if (user?.level !== 'super_admin') {
+        throw new Error("Akses ditolak");
+      }
+
       let logoUrl = formData.logoUrl;
       if (file) {
+        // Validate size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+          toast.error("Ukuran logo terlalu besar (maks 2MB)");
+          setSubmitting(false);
+          return;
+        }
+
         const fileRef = ref(storage, `instansi/logo_${Date.now()}`);
-        await uploadBytes(fileRef, file);
-        logoUrl = await getDownloadURL(fileRef);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        logoUrl = await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(Math.round(progress));
+            }, 
+            (error) => {
+              console.error("Upload error:", error);
+              reject(error);
+            }, 
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(downloadURL);
+            }
+          );
+        });
       }
 
       await setDoc(doc(db, 'instansi', 'config'), {
@@ -80,11 +109,14 @@ export default function PengaturanInstansi() {
       });
       
       toast.success("Pengaturan instansi berhasil disimpan");
-      // Reload page to update navbar logo/name
-      window.location.reload();
-    } catch (error) {
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error: any) {
       console.error("Error saving instansi:", error);
-      toast.error("Gagal menyimpan pengaturan");
+      let errMsg = "Gagal menyimpan pengaturan";
+      if (error.code === 'storage/retry-limit-exceeded') {
+        errMsg = "Gagal mengunggah logo (Koneksi bermasalah atau izin Storage belum aktif)";
+      }
+      toast.error(errMsg);
     } finally {
       setSubmitting(false);
     }
@@ -175,9 +207,26 @@ export default function PengaturanInstansi() {
               </div>
             </div>
             <div className="pt-4 border-t border-border">
+              {submitting && uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="mb-4">
+                  <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                    <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }}></div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1 text-center">Mengunggah Logo: {uploadProgress}%</p>
+                </div>
+              )}
               <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={submitting}>
-                {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Simpan Perubahan
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {uploadProgress > 0 && uploadProgress < 100 ? 'Mengunggah...' : 'Menyimpan...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Simpan Perubahan
+                  </>
+                )}
               </Button>
             </div>
           </form>

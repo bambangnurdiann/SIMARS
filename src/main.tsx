@@ -11,7 +11,14 @@ console.error = (...args) => {
 };
 
 window.addEventListener('error', (event) => {
-  if (event.error?.message?.includes('Cannot set property fetch of #<Window>')) {
+  if (event.error?.message?.includes('Cannot set property fetch of #<Window>') || 
+      event.message?.includes('Cannot set property fetch of #<Window>')) {
+    event.preventDefault();
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  if (event.reason?.message?.includes('Cannot set property fetch of #<Window>')) {
     event.preventDefault();
   }
 });
