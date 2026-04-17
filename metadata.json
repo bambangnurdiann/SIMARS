@@ -1,0 +1,6 @@
+{
+  "name": "SIMARS - Sistem Informasi Manajemen Surat",
+  "description": "Aplikasi manajemen surat masuk, surat keluar, dan surat keputusan untuk instansi pemerintahan (Pengadilan).",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

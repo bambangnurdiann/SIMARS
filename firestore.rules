@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: { id, username, nama, nip, email, level, createdAt }
+    //
+    // Collection: klasifikasi
+    // Fields: { id, kode, nama, uraian, createdAt, updatedAt }
+    //
+    // Collection: suratMasuk
+    // Fields: { id, noAgenda, asalSurat, nomorSurat, isiRingkas, kodeKlasifikasi, indeksBerkas, tanggalSurat, fileSurat, keterangan, pengolah, pengolahNama, createdAt, updatedAt, sudahDisposisi }
+    //
+    // Collection: suratKeluar
+    // Fields: { id, noAgenda, nomorSurat, tujuanSurat, isiRingkas, kodeKlasifikasi, tanggalSurat, fileSurat, keterangan, pengolah, pengolahNama, createdAt, updatedAt }
+    //
+    // Collection: suratKeputusan
+    // Fields: { id, noSK, tahun, tentang, tanggalSurat, fileSurat, keterangan, pengolah, pengolahNama, createdAt, updatedAt }
+    //
+    // Collection: instansi
+    // Fields: { nama, alamat, namaPimpinan, nipPimpinan, logoUrl }
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserData().level == 'super_admin';
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (getUserData().level == 'admin' || getUserData().level == 'super_admin');
+    }
+
+    function isPimpinan() {
+      return isAuthenticated() && getUserData().level == 'pimpinan';
+    }
+
+    function isPegawai() {
+      return isAuthenticated() && getUserData().level == 'pegawai';
+    }
+
+    // Rules for users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // Rules for klasifikasi collection
+    match /klasifikasi/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // Rules for suratMasuk collection
+    match /suratMasuk/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if isSuperAdmin();
+      
+      // Subcollection disposisi
+      match /disposisi/{disposisiId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAdmin();
+        allow delete: if isSuperAdmin();
+      }
+    }
+
+    // Rules for suratKeluar collection
+    match /suratKeluar/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Rules for suratKeputusan collection
+    match /suratKeputusan/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Rules for instansi collection
+    match /instansi/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+  }
+}

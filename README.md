@@ -1,11 +1,50 @@
-<div align="center">
+# SIMARS - Sistem Informasi Manajemen Surat
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+SIMARS adalah aplikasi manajemen surat masuk, surat keluar, dan surat keputusan yang dirancang khusus untuk instansi pemerintahan (Pengadilan).
 
-  <h1>Built with AI Studio</h2>
+## Fitur Utama
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Dashboard Statistik**: Visualisasi data surat masuk dan keluar per bulan serta per klasifikasi.
+- **Manajemen Surat Masuk**: Pencatatan surat masuk, upload file, dan sistem disposisi.
+- **Sistem Disposisi**: Alur kerja disposisi dari pimpinan ke pegawai dengan notifikasi email.
+- **Manajemen Surat Keluar**: Penomoran surat otomatis sesuai pola instansi.
+- **Manajemen Surat Keputusan (SK)**: Pengarsipan SK instansi.
+- **Buku Agenda**: Cetak agenda surat berdasarkan periode tanggal ke PDF dan Excel.
+- **Manajemen Pengguna**: 4 level akses (Super Admin, Admin, Pimpinan, Pegawai).
+- **Notifikasi Email**: Notifikasi otomatis ke Pimpinan untuk surat baru dan ke Pegawai untuk disposisi baru.
+- **Dark Mode**: Dukungan penuh mode gelap untuk kenyamanan mata.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Tech Stack
 
-</div>
+- **Frontend**: React 18 + Vite + Tailwind CSS
+- **UI Components**: shadcn/ui + Lucide Icons
+- **Backend**: Firebase (Firestore, Auth, Storage)
+- **Server**: Express (untuk API Email)
+- **Email**: Resend API
+- **Export**: xlsx (Excel) + jsPDF (PDF)
+
+## Instalasi
+
+1. Clone repository ini.
+2. Jalankan `npm install` untuk menginstal dependensi.
+3. Buat file `.env` berdasarkan `.env.example` dan isi dengan konfigurasi Firebase serta Resend API Key Anda.
+4. Jalankan `npm run dev` untuk memulai server pengembangan.
+
+## Konfigurasi Firebase
+
+Pastikan Anda telah mengaktifkan:
+- **Authentication**: Email/Password provider.
+- **Firestore Database**: Dalam mode produksi atau test.
+- **Storage**: Untuk penyimpanan file surat dan logo.
+
+## Struktur Folder
+
+- `/src/pages`: Halaman utama aplikasi.
+- `/src/components`: Komponen UI reusable.
+- `/src/lib`: Konfigurasi Firebase, Email, dan fungsi Export.
+- `/src/hooks`: Custom hooks untuk autentikasi.
+- `/server.ts`: Server Express untuk menangani API backend (Email).
+
+## Lisensi
+
+Apache-2.0
