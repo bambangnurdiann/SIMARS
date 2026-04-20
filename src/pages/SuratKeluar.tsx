@@ -445,6 +445,19 @@ export default function SuratKeluarPage() {
                 />
               </div>
             </div>
+
+            {/* Panduan Pengisian */}
+            <div className="mb-4 rounded-lg border border-border bg-secondary/30 p-4">
+              <h4 className="mb-2 text-[13px] font-bold text-foreground">💡 Panduan Pengisian Surat Keluar:</h4>
+              <ul className="list-inside list-disc space-y-1 text-[12px] text-foreground/90">
+                <li><strong>Tujuan Surat:</strong> Instansi atau perorangan yang dituju.</li>
+                <li><strong>Isi Ringkas:</strong> Ringkasan singkat mengenai tujuan utama surat ini dibuat.</li>
+                <li><strong>Klasifikasi:</strong> Pilih kategori yang tepat agar nomor surat keluar valid.</li>
+                <li><strong>Nomor Surat:</strong> Akan digenerate otomatis setelah Bapak menekan tombol Simpan.</li>
+                <li><strong>Unggah File:</strong> Lampirkan arsip surat yang sudah distempel/tanda tangan.</li>
+              </ul>
+            </div>
+
             <DialogFooter className="flex flex-col sm:flex-row gap-4">
               {submitting && uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-1 mb-2">

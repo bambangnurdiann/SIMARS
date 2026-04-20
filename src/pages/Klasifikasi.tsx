@@ -252,6 +252,17 @@ export default function KlasifikasiPage() {
                 />
               </div>
             </div>
+
+            {/* Panduan Pengisian */}
+            <div className="mb-4 rounded-lg border border-border bg-secondary/30 p-4">
+              <h4 className="mb-2 text-[13px] font-bold text-foreground">💡 Panduan Pengisian Klasifikasi:</h4>
+              <ul className="list-inside list-disc space-y-1 text-[12px] text-foreground/90">
+                <li><strong>Kode:</strong> Identitas unik untuk penomoran surat (contoh: HK.01).</li>
+                <li><strong>Nama:</strong> Nama kategori surat secara umum (contoh: Hukum).</li>
+                <li><strong>Penting:</strong> Kode ini akan digunakan secara sistematis saat pembuatan nomor Surat Keluar. Pastikan kode akurat sesuai tata naskah dinas Bapak.</li>
+              </ul>
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
               <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={submitting}>

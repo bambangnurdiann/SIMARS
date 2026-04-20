@@ -379,6 +379,18 @@ export default function SuratKeputusanPage() {
                 />
               </div>
             </div>
+
+            {/* Panduan Pengisian */}
+            <div className="mb-4 rounded-lg border border-border bg-secondary/30 p-4">
+              <h4 className="mb-2 text-[13px] font-bold text-foreground">💡 Panduan Pengisian SK:</h4>
+              <ul className="list-inside list-disc space-y-1 text-[12px] text-foreground/90">
+                <li><strong>Nomor SK:</strong> Masukkan nomor SK sesuai format resmi instansi.</li>
+                <li><strong>Tentang:</strong> Tuliskan perihal SK tersebut secara jelas dan lengkap.</li>
+                <li><strong>Tahun:</strong> Pastikan tahun sudah sesuai untuk pengarsipan tahunan.</li>
+                <li><strong>File SK:</strong> Sangat disarankan mengunggah file dalam format PDF hasil scan dokumen asli.</li>
+              </ul>
+            </div>
+
             <DialogFooter className="flex flex-col sm:flex-row gap-4">
               {submitting && uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-1 mb-2">

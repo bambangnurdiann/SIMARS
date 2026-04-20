@@ -531,6 +531,19 @@ export default function SuratMasukPage() {
                 />
               </div>
             </div>
+
+            {/* Panduan Pengisian */}
+            <div className="mb-4 rounded-lg border border-border bg-secondary/30 p-4">
+              <h4 className="mb-2 text-[13px] font-bold text-foreground">💡 Panduan Pengisian Surat Masuk:</h4>
+              <ul className="list-inside list-disc space-y-1 text-[12px] text-foreground/90">
+                <li><strong>Asal Surat:</strong> Nama instansi/individu pengirim surat.</li>
+                <li><strong>Nomor Surat:</strong> Isikan nomor sesuai yang tertulis di fisik surat.</li>
+                <li><strong>Klasifikasi:</strong> Pastikan kategori sudah sesuai agar arsip mudah ditemukan.</li>
+                <li><strong>Tanggal Surat:</strong> Gunakan tanggal yang tertera pada surat tersebut.</li>
+                <li><strong>File Surat:</strong> Scan/Upload file maksimal 10MB (PDF/Gambar).</li>
+              </ul>
+            </div>
+
             <DialogFooter className="flex flex-col sm:flex-row gap-4">
               {submitting && uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-1 mb-2">

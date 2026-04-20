@@ -16,6 +16,14 @@ import {
   Cell
 } from 'recharts';
 import { 
+  format, 
+  subMonths, 
+  parseISO, 
+  startOfMonth, 
+  endOfMonth 
+} from 'date-fns';
+import { id } from 'date-fns/locale';
+import { 
   Mail, 
   Send, 
   FileText, 
@@ -61,7 +69,45 @@ export default function Dashboard() {
           disposisiPending: dispSnap.size
         });
 
-        // Classification stats (mocked logic based on data)
+        // Calculate Real Chart Data (Last 6 Months)
+        const last6Months = [];
+        for (let i = 5; i >= 0; i--) {
+          const date = subMonths(new Date(), i);
+          last6Months.push({
+            monthKey: format(date, 'yyyy-MM'),
+            name: format(date, 'MMM', { locale: id }),
+            masuk: 0,
+            keluar: 0
+          });
+        }
+
+        smSnap.forEach(doc => {
+          const data = doc.data();
+          const tanggal = data.tanggalSurat; // yyyy-MM-dd
+          if (tanggal) {
+            const mKey = tanggal.substring(0, 7);
+            const monthIdx = last6Months.findIndex(m => m.monthKey === mKey);
+            if (monthIdx !== -1) {
+              last6Months[monthIdx].masuk++;
+            }
+          }
+        });
+
+        skSnap.forEach(doc => {
+          const data = doc.data();
+          const tanggal = data.tanggalKeluar; // yyyy-MM-dd
+          if (tanggal) {
+            const mKey = tanggal.substring(0, 7);
+            const monthIdx = last6Months.findIndex(m => m.monthKey === mKey);
+            if (monthIdx !== -1) {
+              last6Months[monthIdx].keluar++;
+            }
+          }
+        });
+
+        setChartData(last6Months);
+
+        // Classification stats (real data)
         const smByClass: any = {};
         smSnap.forEach(doc => {
           const c = doc.data().kodeKlasifikasi || 'Lainnya';
@@ -78,15 +124,6 @@ export default function Dashboard() {
           masuk: Object.entries(smByClass).map(([kode, count]) => ({ kode, count })),
           keluar: Object.entries(skByClass).map(([kode, count]) => ({ kode, count }))
         });
-
-        setChartData([
-          { name: 'Jan', masuk: 40, keluar: 24 },
-          { name: 'Feb', masuk: 30, keluar: 13 },
-          { name: 'Mar', masuk: 20, keluar: 98 },
-          { name: 'Apr', masuk: 27, keluar: 39 },
-          { name: 'Mei', masuk: 18, keluar: 48 },
-          { name: 'Jun', masuk: 23, keluar: 38 },
-        ]);
 
         const recentQ = query(collection(db, 'suratMasuk'), orderBy('createdAt', 'desc'), limit(5));
         const recentSnap = await getDocs(recentQ);
