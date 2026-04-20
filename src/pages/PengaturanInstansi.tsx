@@ -17,8 +17,8 @@ import {
   setDoc,
   serverTimestamp 
 } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { supabase, SUPABASE_BUCKET } from '@/lib/supabase';
 import { Instansi } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -81,25 +81,34 @@ export default function PengaturanInstansi() {
           return;
         }
 
-        const fileRef = ref(storage, `instansi/logo_${Date.now()}`);
-        const uploadTask = uploadBytesResumable(fileRef, file);
+        const fileExt = file.name.split('.').pop();
+        const fileName = `logo_${Date.now()}.${fileExt}`;
+        const filePath = `instansi/${fileName}`;
 
-        logoUrl = await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setUploadProgress(Math.round(progress));
-            }, 
-            (error) => {
-              console.error("Upload error:", error);
-              reject(error);
-            }, 
-            async () => {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            }
-          );
-        });
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => (prev < 90 ? prev + 10 : prev));
+        }, 500);
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from(SUPABASE_BUCKET)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        clearInterval(progressInterval);
+        
+        if (uploadError) {
+          throw new Error(`Upload Error: ${uploadError.message}`);
+        }
+
+        setUploadProgress(100);
+
+        const { data: { publicUrl } } = supabase.storage
+          .from(SUPABASE_BUCKET)
+          .getPublicUrl(filePath);
+          
+        logoUrl = publicUrl;
       }
 
       await setDoc(doc(db, 'instansi', 'config'), {
@@ -113,8 +122,10 @@ export default function PengaturanInstansi() {
     } catch (error: any) {
       console.error("Error saving instansi:", error);
       let errMsg = "Gagal menyimpan pengaturan";
-      if (error.code === 'storage/retry-limit-exceeded') {
-        errMsg = "Gagal mengunggah logo (Koneksi bermasalah atau izin Storage belum aktif)";
+      if (error.message?.includes("row-level security policy")) {
+        errMsg = "Gagal unggah: Izin RLS Supabase ditolak. Pastikan Bapak sudah menambahkan Policy 'Allow Public' di bucket simars-storage.";
+      } else if (error.message?.includes("Upload Error")) {
+        errMsg = `Gagal unggah logo ke Supabase: ${error.message}.`;
       }
       toast.error(errMsg);
     } finally {

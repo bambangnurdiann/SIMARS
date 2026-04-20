@@ -31,8 +31,8 @@ import {
   where,
   limit
 } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { supabase, SUPABASE_BUCKET } from '@/lib/supabase';
 import { SuratMasuk, Klasifikasi } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -147,25 +147,35 @@ export default function SuratMasukPage() {
           return;
         }
 
-        const fileRef = ref(storage, `surat-masuk/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, file);
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `surat-masuk/${fileName}`;
 
-        fileUrl = await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setUploadProgress(Math.round(progress));
-            }, 
-            (error) => {
-              console.error("Upload error:", error);
-              reject(error);
-            }, 
-            async () => {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            }
-          );
-        });
+        // Simple progress simulation for Supabase (as standard upload doesn't provide it)
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => (prev < 90 ? prev + 10 : prev));
+        }, 500);
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from(SUPABASE_BUCKET)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        clearInterval(progressInterval);
+        
+        if (uploadError) {
+          throw new Error(`Upload Error: ${uploadError.message}`);
+        }
+
+        setUploadProgress(100);
+
+        const { data: { publicUrl } } = supabase.storage
+          .from(SUPABASE_BUCKET)
+          .getPublicUrl(filePath);
+          
+        fileUrl = publicUrl;
       }
 
       if (editingItem) {
@@ -229,9 +239,15 @@ export default function SuratMasukPage() {
         keterangan: '',
       });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving data:", error);
-      toast.error("Gagal menyimpan data");
+      let message = "Gagal menyimpan data";
+      if (error.message?.includes("row-level security policy")) {
+        message = "Gagal unggah: Izin RLS Supabase ditolak. Pastikan Bapak sudah menambahkan Policy 'Allow Public' di bucket simars-storage.";
+      } else if (error.message?.includes("Upload Error")) {
+        message = `Gagal unggah ke Supabase: ${error.message}`;
+      }
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
