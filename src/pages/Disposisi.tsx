@@ -120,7 +120,7 @@ export default function DisposisiPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !surat) return;
-    if (user?.level === 'pimpinan' || user?.level === 'pegawai') {
+    if (user?.level === 'pegawai') {
       toast.error("Anda tidak memiliki akses untuk menambah/mengubah disposisi");
       return;
     }
@@ -261,7 +261,7 @@ export default function DisposisiPage() {
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" /> Cetak Lembar Disposisi
           </Button>
-          {(user?.level === 'admin' || user?.level === 'super_admin') && (
+          {(user?.level === 'pimpinan' || user?.level === 'admin' || user?.level === 'super_admin') && (
             <Button onClick={() => setIsDialogOpen(true)} className="bg-[#16a34a] hover:bg-[#15803d]">
               <Plus className="mr-2 h-4 w-4" /> Tambah Disposisi
             </Button>
@@ -328,7 +328,7 @@ export default function DisposisiPage() {
                       <Badge variant={item.sifat === 'Segera' ? 'destructive' : item.sifat === 'Rahasia' ? 'outline' : 'secondary'}>
                         {item.sifat}
                       </Badge>
-                      {(user?.level === 'admin' || user?.level === 'super_admin') && (
+                      {(user?.level === 'pimpinan' || user?.level === 'admin' || user?.level === 'super_admin') && (
                         <div className="flex gap-1 ml-2">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}>
                             <Edit2 className="h-4 w-4" />

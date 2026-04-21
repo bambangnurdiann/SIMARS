@@ -125,7 +125,12 @@ export default function Dashboard() {
           keluar: Object.entries(skByClass).map(([kode, count]) => ({ kode, count }))
         });
 
-        const recentQ = query(collection(db, 'suratMasuk'), orderBy('createdAt', 'desc'), limit(5));
+        const recentQ = query(
+          collection(db, 'suratMasuk'), 
+          where('sudahDisposisi', '==', false),
+          orderBy('createdAt', 'desc'), 
+          limit(5)
+        );
         const recentSnap = await getDocs(recentQ);
         const recent: any[] = [];
         recentSnap.forEach(doc => recent.push({ id: doc.id, ...doc.data() }));
@@ -226,7 +231,7 @@ export default function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 minimal-card !p-0 overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex justify-between items-center">
-            <h3 className="font-semibold text-[14px] text-foreground">Surat Masuk Terbaru</h3>
+            <h3 className="font-semibold text-[14px] text-foreground">Surat Masuk (Belum Disposisi)</h3>
             <a href="/surat-masuk" className="text-[12px] text-primary hover:underline">Lihat Semua</a>
           </div>
           <div className="overflow-x-auto">

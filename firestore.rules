@@ -71,8 +71,8 @@ service cloud.firestore {
       // Subcollection disposisi
       match /disposisi/{disposisiId} {
         allow read: if isAuthenticated();
-        allow create, update: if isAdmin();
-        allow delete: if isSuperAdmin();
+        allow create, update: if isAdmin() || isPimpinan();
+        allow delete: if isAdmin() || isPimpinan();
       }
     }
 
