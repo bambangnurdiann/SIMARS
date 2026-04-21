@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { LogOut, Sun, Moon, Bell, Menu, Plus } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,20 +21,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Instansi } from '@/types';
 
-export default function Navbar() {
+export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(false);
   const [instansi, setInstansi] = useState<Instansi | null>(null);
 
   useEffect(() => {
-    const fetchInstansi = async () => {
-      const docRef = doc(db, 'instansi', 'config');
-      const docSnap = await getDoc(docRef);
+    const docRef = doc(db, 'instansi', 'config');
+    
+    // Use onSnapshot for real-time updates when data is saved in settings
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setInstansi(docSnap.data() as Instansi);
       }
-    };
-    fetchInstansi();
+    }, (error) => {
+      console.error("Error listening to instansi:", error);
+    });
 
     // Check theme
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -44,6 +46,8 @@ export default function Navbar() {
       setIsDark(false);
       document.documentElement.classList.remove('dark');
     }
+
+    return () => unsubscribe();
   }, []);
 
   const toggleTheme = () => {
@@ -63,16 +67,16 @@ export default function Navbar() {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-8">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="md:hidden">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-8">
+      <div className="flex items-center gap-3 overflow-hidden">
+        <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0" onClick={onMenuClick}>
           <Menu className="h-5 w-5" />
         </Button>
-        <div className="instansi-info flex flex-col">
-          <div className="instansi-name text-[14px] font-semibold text-foreground">
+        <div className="instansi-info flex flex-col overflow-hidden">
+          <div className="instansi-name text-[14px] font-semibold text-foreground truncate max-w-[150px] sm:max-w-[300px]">
             {instansi?.nama || 'SIMARS'}
           </div>
-          <div className="text-[11px] text-muted-foreground">
+          <div className="text-[11px] text-muted-foreground truncate hidden sm:block">
             {instansi?.alamat || 'Sistem Informasi Manajemen Surat'}
           </div>
         </div>

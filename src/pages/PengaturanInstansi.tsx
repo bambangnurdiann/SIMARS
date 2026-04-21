@@ -89,26 +89,31 @@ export default function PengaturanInstansi() {
           setUploadProgress(prev => (prev < 90 ? prev + 10 : prev));
         }, 500);
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from(SUPABASE_BUCKET)
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from(SUPABASE_BUCKET)
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
-        clearInterval(progressInterval);
-        
-        if (uploadError) {
-          throw new Error(`Upload Error: ${uploadError.message}`);
-        }
-
-        setUploadProgress(100);
-
-        const { data: { publicUrl } } = supabase.storage
-          .from(SUPABASE_BUCKET)
-          .getPublicUrl(filePath);
+          clearInterval(progressInterval);
           
-        logoUrl = publicUrl;
+          if (uploadError) {
+            throw new Error(`Upload Error: ${uploadError.message}`);
+          }
+
+          setUploadProgress(100);
+
+          const { data: { publicUrl } } = supabase.storage
+            .from(SUPABASE_BUCKET)
+            .getPublicUrl(filePath);
+            
+          logoUrl = publicUrl;
+        } catch (err: any) {
+          clearInterval(progressInterval);
+          throw err;
+        }
       }
 
       await setDoc(doc(db, 'instansi', 'config'), {
@@ -118,7 +123,9 @@ export default function PengaturanInstansi() {
       });
       
       toast.success("Pengaturan instansi berhasil disimpan");
-      setTimeout(() => window.location.reload(), 1500);
+      // Instead of full reload which might cause 404 in some environments, just update local state or navigate
+      setFile(null);
+      setUploadProgress(0);
     } catch (error: any) {
       console.error("Error saving instansi:", error);
       let errMsg = "Gagal menyimpan pengaturan";

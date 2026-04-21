@@ -32,12 +32,16 @@ const settingItems = [
   { icon: Users, label: 'Pengguna', path: '/pengaturan/pengguna', roles: ['super_admin'] },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ className, onItemClick }: { className?: string, onItemClick?: () => void }) {
   const location = useLocation();
   const { user } = useAuth();
 
+  const handleLinkClick = () => {
+    if (onItemClick) onItemClick();
+  };
+
   return (
-    <aside className="hidden w-[240px] flex-col border-r border-border bg-card md:flex">
+    <aside className={cn("hidden w-[240px] flex-col border-r border-border bg-card md:flex", className)}>
       <div className="flex h-16 items-center border-b border-border px-6">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
@@ -53,6 +57,7 @@ export default function Sidebar() {
             <Link
               key={item.path}
               to={item.path}
+              onClick={handleLinkClick}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-[14px] transition-all",
                 location.pathname === item.path
@@ -74,6 +79,7 @@ export default function Sidebar() {
                 <Link
                   key={item.path}
                   to={item.path}
+                  onClick={handleLinkClick}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2.5 text-[14px] transition-all",
                     location.pathname === item.path
