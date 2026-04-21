@@ -1,16 +1,20 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
-
 let supabaseInstance: SupabaseClient | null = null;
 
 export const getSupabase = (): SupabaseClient => {
   if (!supabaseInstance) {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase URL dan Anon Key belum diatur di Settings.');
+    const url = (import.meta as any).env.VITE_SUPABASE_URL;
+    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+
+    if (!url || !anonKey) {
+      const missing = [];
+      if (!url) missing.push('VITE_SUPABASE_URL');
+      if (!anonKey) missing.push('VITE_SUPABASE_ANON_KEY');
+      
+      throw new Error(`Koneksi Gagal: Variabel ${missing.join(' dan ')} tidak ditemukan. Pastikan sudah diatur di menu Settings (ikon gir) di pojok kiri bawah.`);
     }
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+    supabaseInstance = createClient(url, anonKey);
   }
   return supabaseInstance;
 };
