@@ -53,7 +53,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { sendEmailNotification, emailTemplates } from '@/lib/email';
-import { exportLembarDisposisi } from '@/lib/exportPDF';
+import { exportLembarDisposisiDocx } from '@/lib/exportDocx';
 
 export default function DisposisiPage() {
   const { id } = useParams<{ id: string }>();
@@ -229,8 +229,8 @@ export default function DisposisiPage() {
       const instansiDoc = await getDoc(doc(db, 'instansi', 'config'));
       const instansi = instansiDoc.exists() ? instansiDoc.data() : null;
       
-      await exportLembarDisposisi(surat, disposisiList, instansi);
-      toast.success("Lembar disposisi berhasil di-generate");
+      await exportLembarDisposisiDocx(surat, disposisiList, instansi);
+      toast.success("Lembar disposisi berhasil di-generate (DOCX)");
     } catch (error) {
       console.error("Error printing:", error);
       toast.error("Gagal mencetak lembar disposisi");
@@ -382,7 +382,9 @@ export default function DisposisiPage() {
                   onValueChange={(v) => setFormData({...formData, tujuanDisposisi: v})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih Pegawai" />
+                    <SelectValue>
+                      {users.find(u => u.id === formData.tujuanDisposisi)?.nama || "Pilih Pegawai"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((u) => (
@@ -398,7 +400,9 @@ export default function DisposisiPage() {
                   onValueChange={(v) => setFormData({...formData, sifat: v})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih Sifat" />
+                    <SelectValue>
+                      {formData.sifat || "Pilih Sifat"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Biasa">Biasa</SelectItem>

@@ -55,7 +55,7 @@ import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { sendEmailNotification, emailTemplates } from '@/lib/email';
-import { exportLembarDisposisi } from '@/lib/exportPDF';
+import { exportLembarDisposisiDocx } from '@/lib/exportDocx';
 
 export default function SuratMasukPage() {
   const { user } = useAuth();
@@ -412,7 +412,8 @@ export default function SuratMasukPage() {
                                 const snapD = await getDocs(qD);
                                 const disposisiList: any[] = [];
                                 snapD.forEach(d => disposisiList.push({ id: d.id, ...d.data() }));
-                                await exportLembarDisposisi(item, disposisiList, instansi);
+                                await exportLembarDisposisiDocx(item, disposisiList, instansi);
+                                toast.success("Lembar disposisi berhasil di-generate (DOCX)");
                               } catch (e) {
                                 toast.error("Gagal mencetak lembar disposisi");
                               }
@@ -490,7 +491,9 @@ export default function SuratMasukPage() {
                     onValueChange={(v) => setFormData({...formData, kodeKlasifikasi: v})}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih Klasifikasi" />
+                      <SelectValue>
+                        {formData.kodeKlasifikasi ? `${formData.kodeKlasifikasi} - ${klasifikasi.find(k => k.kode === formData.kodeKlasifikasi)?.nama}` : "Pilih Klasifikasi"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {klasifikasi.map((k) => (

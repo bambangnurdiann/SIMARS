@@ -31,8 +31,20 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { 
+  Document, 
+  Packer, 
+  Paragraph, 
+  TextRun, 
+  Table as DocxTable, 
+  TableRow as DocxTableRow, 
+  TableCell as DocxTableCell, 
+  WidthType, 
+  BorderStyle, 
+  AlignmentType,
+  VerticalAlign 
+} from 'docx';
+import { saveAs } from 'file-saver';
 
 export default function BukuAgendaPage() {
   const [loading, setLoading] = useState(false);
@@ -142,26 +154,20 @@ export default function BukuAgendaPage() {
     toast.success("File Excel berhasil diunduh");
   };
 
-  const exportPDF = () => {
-    const doc = new jsPDF('l', 'mm', 'a4');
+  const exportDocx = async () => {
     const title = activeTab === 'masuk' ? 'AGENDA SURAT MASUK' : activeTab === 'keluar' ? 'AGENDA SURAT KELUAR' : 'AGENDA SURAT KEPUTUSAN';
     
-    doc.setFontSize(16);
-    doc.text(title, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Periode: ${startDate} s/d ${endDate}`, 14, 28);
-
-    let head: string[][] = [];
-    let body: any[][] = [];
+    let head = [];
+    let body = [];
 
     if (activeTab === 'masuk') {
-      head = [['No. Agenda', 'Kode', 'Asal Surat', 'Nomor Surat', 'Tgl Surat', 'Isi Ringkas']];
+      head = ['No. Agenda', 'Kode', 'Asal Surat', 'Nomor Surat', 'Tgl Surat', 'Isi Ringkas'];
       body = dataMasuk.map(item => [item.noAgenda, item.kodeKlasifikasi, item.asalSurat, item.nomorSurat, item.tanggalSurat, item.isiRingkas]);
     } else if (activeTab === 'keluar') {
-      head = [['No. Agenda', 'Kode', 'Tujuan Surat', 'Nomor Surat', 'Tgl Surat', 'Isi Ringkas']];
+      head = ['No. Agenda', 'Kode', 'Tujuan Surat', 'Nomor Surat', 'Tgl Surat', 'Isi Ringkas'];
       body = dataKeluar.map(item => [item.noAgenda, item.kodeKlasifikasi, item.tujuanSurat, item.nomorSurat, item.tanggalSurat, item.isiRingkas]);
     } else {
-      head = [['Nomor SK', 'Tahun', 'Tentang', 'Tgl SK', 'Keterangan']];
+      head = ['Nomor SK', 'Tahun', 'Tentang', 'Tgl SK', 'Keterangan'];
       body = dataSK.map(item => [item.noSK, item.tahun, item.tentang, item.tanggalSurat, item.keterangan]);
     }
 
@@ -170,16 +176,46 @@ export default function BukuAgendaPage() {
       return;
     }
 
-    autoTable(doc, {
-      head: head,
-      body: body,
-      startY: 35,
-      theme: 'grid',
-      headStyles: { fillColor: [22, 163, 74] }
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new TextRun({ text: title, bold: true, size: 32, color: "000000" }),
+            ],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new TextRun({ text: `Periode: ${startDate} s/d ${endDate}`, size: 20, color: "000000" }),
+            ],
+          }),
+          new Paragraph({ text: "" }),
+          new DocxTable({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new DocxTableRow({
+                children: head.map(h => new DocxTableCell({
+                  children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "000000" })], alignment: AlignmentType.CENTER })],
+                  verticalAlign: VerticalAlign.CENTER,
+                })),
+              }),
+              ...body.map(row => new DocxTableRow({
+                children: row.map(cell => new DocxTableCell({
+                  children: [new Paragraph({ children: [new TextRun({ text: String(cell || ''), color: "000000" })] })],
+                  verticalAlign: VerticalAlign.CENTER,
+                })),
+              })),
+            ],
+          }),
+        ],
+      }],
     });
 
-    doc.save(`${title.replace(/ /g, '_')}_${startDate}.pdf`);
-    toast.success("File PDF berhasil diunduh");
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `${title.replace(/ /g, '_')}_${startDate}.docx`);
+    toast.success("File DOCX berhasil diunduh");
   };
 
   return (
@@ -214,9 +250,9 @@ export default function BukuAgendaPage() {
               <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
               Excel
             </Button>
-            <Button variant="outline" onClick={exportPDF} className="text-muted-foreground">
-              <Printer className="mr-2 h-4 w-4 text-red-600 dark:text-red-400" />
-              Cetak PDF
+            <Button variant="outline" onClick={exportDocx} className="text-muted-foreground">
+              <Printer className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
+              Cetak DOCX
             </Button>
           </div>
         </div>

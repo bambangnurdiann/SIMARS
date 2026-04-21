@@ -422,7 +422,9 @@ export default function SuratKeluarPage() {
                     onValueChange={(v) => setFormData({...formData, kodeKlasifikasi: v})}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih Klasifikasi" />
+                      <SelectValue>
+                        {formData.kodeKlasifikasi ? `${formData.kodeKlasifikasi} - ${klasifikasi.find(k => k.kode === formData.kodeKlasifikasi)?.nama}` : "Pilih Klasifikasi"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {klasifikasi.map((k) => (
