@@ -4,8 +4,9 @@ let supabaseInstance: SupabaseClient | null = null;
 
 export const getSupabase = (): SupabaseClient => {
   if (!supabaseInstance) {
-    const url = (import.meta as any).env.VITE_SUPABASE_URL;
-    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    // Try both Vite-style and standard process.env (AI Studio uses both depending on state)
+    const url = (import.meta as any).env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
     if (!url || !anonKey) {
       const missing = [];
