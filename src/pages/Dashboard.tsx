@@ -33,7 +33,7 @@ import {
   PlusCircle,
   FolderOpen
 } from 'lucide-react';
-import { collection, query, getDocs, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, getDocs, where, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -53,6 +53,7 @@ export default function Dashboard() {
   });
   const [chartData, setChartData] = useState<any[]>([]);
   const [recentSurat, setRecentSurat] = useState<any[]>([]);
+  const [myDispositions, setMyDispositions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -60,14 +61,35 @@ export default function Dashboard() {
         const smSnap = await getDocs(collection(db, 'suratMasuk'));
         const skSnap = await getDocs(collection(db, 'suratKeluar'));
         const skpSnap = await getDocs(collection(db, 'suratKeputusan'));
-        const dispSnap = await getDocs(query(collection(db, 'suratMasuk'), where('sudahDisposisi', '==', false)));
+        // Count sm where sudahDisposisi is false for stats
+        const dispPendingSnap = await getDocs(query(collection(db, 'suratMasuk'), where('sudahDisposisi', '==', false)));
         
         setStats({
           suratMasuk: smSnap.size,
           suratKeluar: skSnap.size,
           suratKeputusan: skpSnap.size,
-          disposisiPending: dispSnap.size
+          disposisiPending: dispPendingSnap.size
         });
+
+        // ... (existing chart data logic)
+
+        // My Dispositions (Incoming)
+        if (user?.id) {
+          try {
+            const qDisp = query(
+              collectionGroup(db, 'disposisi'), 
+              where('tujuanDisposisi', '==', user.id),
+              orderBy('createdAt', 'desc'),
+              limit(10)
+            );
+            const dispSnap = await getDocs(qDisp);
+            const myDisp: any[] = [];
+            dispSnap.forEach(doc => myDisp.push({ id: doc.id, ...doc.data() }));
+            setMyDispositions(myDisp);
+          } catch (e: any) {
+            console.warn("Disposisi Masuk query requires index or failed:", e.message);
+          }
+        }
 
         // Calculate Real Chart Data (Last 6 Months)
         const last6Months = [];
@@ -267,25 +289,39 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="minimal-card flex flex-col">
-          <div className="mb-4">
-            <h3 className="font-semibold text-[14px] text-foreground">Statistik Volume</h3>
+        <div className="lg:col-span-1 minimal-card !p-0 overflow-hidden flex flex-col">
+          <div className="px-5 py-4 border-b border-border">
+            <h3 className="font-semibold text-[14px] text-foreground">Tugas Disposisi Saya</h3>
           </div>
-          <div className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <XAxis dataKey="name" hide />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--card)', borderRadius: '8px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px', color: 'var(--foreground)' }}
-                  itemStyle={{ color: 'var(--foreground)' }}
-                />
-                <Bar dataKey="masuk" fill="var(--primary)" radius={[4, 4, 0, 0]} name="Surat Masuk" />
-                <Bar dataKey="keluar" fill="var(--muted)" radius={[4, 4, 0, 0]} name="Surat Keluar" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-between text-[11px] text-muted-foreground px-2 mt-2">
-            {chartData.map(d => <span key={d.name}>{d.name}</span>)}
+          <div className="overflow-y-auto flex-1 max-h-[400px]">
+             {myDispositions.length === 0 ? (
+               <div className="p-8 text-center text-muted-foreground text-[12px]">
+                 <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                 Tidak ada disposisi untuk Anda
+               </div>
+             ) : (
+               <div className="divide-y divide-border">
+                 {myDispositions.map((disp) => (
+                   <div key={disp.id} className="p-4 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/surat-masuk/${disp.suratMasukId}/disposisi`)}>
+                      <div className="flex justify-between items-start mb-1">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${disp.sifat === 'Rahasia' ? 'bg-red-100 text-red-700' : disp.sifat === 'Segera' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                          {disp.sifat}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {disp.createdAt?.toDate ? format(disp.createdAt.toDate(), 'dd MMM', { locale: id }) : 'Baru'}
+                        </span>
+                      </div>
+                      <div className="text-[12px] font-semibold text-foreground line-clamp-2">{disp.isiDisposisi}</div>
+                      <div className="text-[11px] text-muted-foreground mt-1 italic">Diteruskan oleh: {disp.pengolahNama}</div>
+                      {disp.batasWaktu && (
+                        <div className="text-[10px] text-orange-600 font-medium mt-1 flex items-center gap-1">
+                          Batas: {disp.batasWaktu}
+                        </div>
+                      )}
+                   </div>
+                 ))}
+               </div>
+             )}
           </div>
         </div>
       </div>

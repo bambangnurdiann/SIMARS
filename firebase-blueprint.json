@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user profiles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "nama": { "type": "string" },
+        "nip": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "level": { "type": "string", "enum": ["super_admin", "admin", "pimpinan", "pegawai"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "username", "nama", "nip", "email", "level", "createdAt"]
+    },
+    "Klasifikasi": {
+      "title": "Klasifikasi",
+      "description": "Classification codes for mail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "kode": { "type": "string" },
+        "nama": { "type": "string" },
+        "uraian": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "kode", "nama", "createdAt"]
+    },
+    "SuratMasuk": {
+      "title": "SuratMasuk",
+      "description": "Incoming mail record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "noAgenda": { "type": "string" },
+        "asalSurat": { "type": "string" },
+        "nomorSurat": { "type": "string" },
+        "isiRingkas": { "type": "string" },
+        "kodeKlasifikasi": { "type": "string" },
+        "indeksBerkas": { "type": "string" },
+        "tanggalSurat": { "type": "string", "format": "date" },
+        "fileSurat": { "type": "string", "format": "uri" },
+        "keterangan": { "type": "string" },
+        "pengolah": { "type": "string" },
+        "pengolahNama": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "sudahDisposisi": { "type": "boolean" }
+      },
+      "required": ["id", "noAgenda", "asalSurat", "nomorSurat", "isiRingkas", "kodeKlasifikasi", "tanggalSurat", "pengolah", "createdAt"]
+    },
+    "Disposisi": {
+      "title": "Disposisi",
+      "description": "Disposition instruction for mail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "suratMasukId": { "type": "string" },
+        "tujuanDisposisi": { "type": "string" },
+        "tujuanNama": { "type": "string" },
+        "isiDisposisi": { "type": "string" },
+        "sifat": { "type": "string", "enum": ["Segera", "Biasa", "Rahasia"] },
+        "batasWaktu": { "type": "string", "format": "date" },
+        "catatan": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "pengolah": { "type": "string" },
+        "pengolahNama": { "type": "string" }
+      },
+      "required": ["id", "suratMasukId", "tujuanDisposisi", "tujuanNama", "isiDisposisi", "sifat", "createdAt", "pengolah"]
+    },
+    "SuratKeluar": {
+      "title": "SuratKeluar",
+      "description": "Outgoing mail record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "noAgenda": { "type": "string" },
+        "nomorSurat": { "type": "string" },
+        "tujuanSurat": { "type": "string" },
+        "isiRingkas": { "type": "string" },
+        "kodeKlasifikasi": { "type": "string" },
+        "tanggalSurat": { "type": "string", "format": "date" },
+        "fileSurat": { "type": "string", "format": "uri" },
+        "keterangan": { "type": "string" },
+        "pengolah": { "type": "string" },
+        "pengolahNama": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "noAgenda", "nomorSurat", "tujuanSurat", "isiRingkas", "kodeKlasifikasi", "tanggalSurat", "pengolah", "createdAt"]
+    },
+    "SuratKeputusan": {
+      "title": "SuratKeputusan",
+      "description": "Decision letter record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "noSK": { "type": "string" },
+        "tahun": { "type": "string" },
+        "tentang": { "type": "string" },
+        "tanggalSurat": { "type": "string", "format": "date" },
+        "fileSurat": { "type": "string", "format": "uri" },
+        "keterangan": { "type": "string" },
+        "pengolah": { "type": "string" },
+        "pengolahNama": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "noSK", "tahun", "tentang", "tanggalSurat", "pengolah", "createdAt"]
+    },
+    "Instansi": {
+      "title": "Instansi",
+      "description": "Institution configuration",
+      "type": "object",
+      "properties": {
+        "nama": { "type": "string" },
+        "alamat": { "type": "string" },
+        "namaPimpinan": { "type": "string" },
+        "nipPimpinan": { "type": "string" },
+        "logoUrl": { "type": "string", "format": "uri" },
+        "kodeInstansi": { "type": "string" }
+      },
+      "required": ["nama", "alamat", "namaPimpinan", "nipPimpinan"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and roles"
+    },
+    "/klasifikasi/{id}": {
+      "schema": "Klasifikasi",
+      "description": "Classification codes"
+    },
+    "/suratMasuk/{id}": {
+      "schema": "SuratMasuk",
+      "description": "Incoming mail"
+    },
+    "/suratMasuk/{id}/disposisi/{disposisiId}": {
+      "schema": "Disposisi",
+      "description": "Dispositions for incoming mail"
+    },
+    "/suratKeluar/{id}": {
+      "schema": "SuratKeluar",
+      "description": "Outgoing mail"
+    },
+    "/suratKeputusan/{id}": {
+      "schema": "SuratKeputusan",
+      "description": "Decision letters (SK)"
+    },
+    "/instansi/{id}": {
+      "schema": "Instansi",
+      "description": "Institution settings"
+    }
+  }
+}

@@ -328,14 +328,16 @@ export default function DisposisiPage() {
                       <Badge variant={item.sifat === 'Segera' ? 'destructive' : item.sifat === 'Rahasia' ? 'outline' : 'secondary'}>
                         {item.sifat}
                       </Badge>
-                      {(user?.level === 'pimpinan' || user?.level === 'admin' || user?.level === 'super_admin') && (
+                      {(user?.level === 'pimpinan' || user?.level === 'admin' || user?.level === 'super_admin' || item.tujuanDisposisi === user?.id) && (
                         <div className="flex gap-1 ml-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}>
-                            <Edit2 className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(item)}>
+                            {item.tujuanDisposisi === user?.id && !(user?.level === 'admin' || user?.level === 'super_admin') ? <FileText className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {(user?.level === 'pimpinan' || user?.level === 'admin' || user?.level === 'super_admin') && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(item.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -368,9 +370,11 @@ export default function DisposisiPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Disposisi' : 'Tambah Disposisi Baru'}</DialogTitle>
+            <DialogTitle>{editingItem ? (editingItem.tujuanDisposisi === user?.id && user?.level === 'pegawai' ? 'Lapor Progres Disposisi' : 'Edit Disposisi') : 'Tambah Disposisi Baru'}</DialogTitle>
             <DialogDescription>
-              Tentukan tujuan dan isi instruksi disposisi.
+              {editingItem?.tujuanDisposisi === user?.id && user?.level === 'pegawai' 
+                ? 'Berikan catatan atau laporan tindak lanjut untuk instruksi ini.' 
+                : 'Tentukan tujuan dan isi instruksi disposisi.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -380,6 +384,7 @@ export default function DisposisiPage() {
                 <Select 
                   value={formData.tujuanDisposisi} 
                   onValueChange={(v) => setFormData({...formData, tujuanDisposisi: v})}
+                  disabled={editingItem?.tujuanDisposisi === user?.id && user?.level === 'pegawai'}
                 >
                   <SelectTrigger>
                     <SelectValue>
@@ -398,6 +403,7 @@ export default function DisposisiPage() {
                 <Select 
                   value={formData.sifat} 
                   onValueChange={(v) => setFormData({...formData, sifat: v})}
+                  disabled={editingItem?.tujuanDisposisi === user?.id && user?.level === 'pegawai'}
                 >
                   <SelectTrigger>
                     <SelectValue>
@@ -419,6 +425,7 @@ export default function DisposisiPage() {
                   onChange={(e) => setFormData({...formData, isiDisposisi: e.target.value})}
                   required
                   placeholder="Contoh: Segera tindak lanjuti dan laporkan hasilnya"
+                  disabled={editingItem?.tujuanDisposisi === user?.id && user?.level === 'pegawai'}
                 />
               </div>
               <div className="grid gap-2">
@@ -429,14 +436,18 @@ export default function DisposisiPage() {
                   value={formData.batasWaktu}
                   onChange={(e) => setFormData({...formData, batasWaktu: e.target.value})}
                   required
+                  disabled={editingItem?.tujuanDisposisi === user?.id && user?.level === 'pegawai'}
                 />
               </div>
               <div className="grid gap-2 md:col-span-2">
-                <Label htmlFor="catatan">Catatan Tambahan</Label>
+                <Label htmlFor="catatan">
+                  {editingItem?.tujuanDisposisi === user?.id && user?.level === 'pegawai' ? 'Laporan / Catatan Anda' : 'Catatan Tambahan'}
+                </Label>
                 <Input 
                   id="catatan" 
                   value={formData.catatan}
                   onChange={(e) => setFormData({...formData, catatan: e.target.value})}
+                  placeholder={editingItem?.tujuanDisposisi === user?.id ? 'Tuliskan progres atau laporan di sini...' : ''}
                 />
               </div>
             </div>
