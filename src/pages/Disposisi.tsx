@@ -17,7 +17,8 @@ import {
   User,
   Info,
   Clock,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import { 
   collection, 

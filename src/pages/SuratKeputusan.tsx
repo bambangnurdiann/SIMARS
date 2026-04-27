@@ -68,12 +68,20 @@ export default function SuratKeputusanPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'suratKeputusan'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'suratKeputusan'));
       const querySnapshot = await getDocs(q);
       const items: SuratKeputusan[] = [];
       querySnapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() } as SuratKeputusan);
       });
+
+      // Sort in memory safely
+      items.sort((a, b) => {
+        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return timeB - timeA;
+      });
+
       setData(items);
     } catch (error) {
       console.error("Error fetching data:", error);

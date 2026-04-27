@@ -161,7 +161,7 @@ export const exportLembarDisposisiDocx = async (surat: SuratMasuk, disposisi: Di
             new TableRow({
               children: [
                 new TableCell({
-                  border: {
+                  borders: {
                     top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
                     bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
                     left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -175,7 +175,7 @@ export const exportLembarDisposisiDocx = async (surat: SuratMasuk, disposisi: Di
                   width: { size: 50, type: WidthType.PERCENTAGE }
                 }),
                 new TableCell({
-                  border: {
+                  borders: {
                     top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
                     bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
                     left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },

@@ -30,6 +30,7 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isSignedIn() && (
         request.auth.token.email == 'Bambangnurdiann@gmail.com' ||
+        request.auth.uid == 'Bambangnurdiann@gmail.com' || // Add UID fallback just in case
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getMyData().level == 'super_admin')
       );
     }
@@ -48,10 +49,6 @@ service cloud.firestore {
       );
     }
 
-    function isAuthor() {
-      return incoming().pengolah == request.auth.uid;
-    }
-
     // ===============================================================
     // COLLECTION MATCH BLOCKS
     // ===============================================================
@@ -59,7 +56,7 @@ service cloud.firestore {
     // Users
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSuperAdmin();
+      allow write: if isSuperAdmin() || request.auth.uid == userId; // Allow self-update
     }
 
     // Klasifikasi
@@ -71,15 +68,15 @@ service cloud.firestore {
     // Surat Masuk
     match /suratMasuk/{id} {
       allow read: if isSignedIn();
-      allow create: if (isAdmin() || isSuperAdmin()) && isAuthor();
+      allow create: if isAdmin() || isSuperAdmin(); // Remove isAuthor for create
       allow update: if isAdmin() || isPimpinan() || isSuperAdmin();
       allow delete: if isSuperAdmin();
 
       // Disposisi Subcollection
       match /disposisi/{disposisiId} {
         allow read: if isSignedIn();
-        allow create: if (isAdmin() || isPimpinan() || isSuperAdmin()) && isAuthor();
-        allow update: if isAdmin() || isPimpinan() || isSuperAdmin() || (isSignedIn() && existing().tujuanDisposisi == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['catatan', 'updatedAt']));
+        allow create: if (isAdmin() || isPimpinan() || isSuperAdmin());
+        allow update: if isAdmin() || isPimpinan() || isSuperAdmin() || (isSignedIn() && existing().tujuanDisposisi == request.auth.uid);
         allow delete: if isAdmin() || isPimpinan() || isSuperAdmin();
       }
     }

@@ -73,12 +73,20 @@ export default function SuratKeluarPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'suratKeluar'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'suratKeluar'));
       const querySnapshot = await getDocs(q);
       const items: SuratKeluar[] = [];
       querySnapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() } as SuratKeluar);
       });
+
+      // Sort in memory safely
+      items.sort((a, b) => {
+        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return timeB - timeA;
+      });
+
       setData(items);
 
       const qK = query(collection(db, 'klasifikasi'), orderBy('kode', 'asc'));

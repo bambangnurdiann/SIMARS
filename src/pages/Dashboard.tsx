@@ -31,7 +31,8 @@ import {
   TrendingUp,
   TrendingDown,
   PlusCircle,
-  FolderOpen
+  FolderOpen,
+  Info
 } from 'lucide-react';
 import { collection, query, getDocs, where, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -76,18 +77,29 @@ export default function Dashboard() {
         // My Dispositions (Incoming)
         if (user?.id) {
           try {
-            const qDisp = query(
-              collectionGroup(db, 'disposisi'), 
-              where('tujuanDisposisi', '==', user.id),
-              orderBy('createdAt', 'desc'),
-              limit(10)
-            );
+            // Fetch all disposisi and filter in memory to avoid index requirements
+            const qDisp = query(collectionGroup(db, 'disposisi'));
             const dispSnap = await getDocs(qDisp);
             const myDisp: any[] = [];
-            dispSnap.forEach(doc => myDisp.push({ id: doc.id, ...doc.data() }));
-            setMyDispositions(myDisp);
+            dispSnap.forEach(doc => {
+              const d = doc.data();
+              if (d.tujuanDisposisi === user.id) {
+                myDisp.push({ id: doc.id, ...d });
+              }
+            });
+            
+            // Sort manually by date
+            myDisp.sort((a, b) => {
+               const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 
+                             (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+               const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 
+                             (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+               return timeB - timeA;
+            });
+            
+            setMyDispositions(myDisp.slice(0, 10));
           } catch (e: any) {
-            console.warn("Disposisi Masuk query requires index or failed:", e.message);
+            console.warn("Disposisi fetch failed:", e.message);
           }
         }
 
@@ -147,23 +159,23 @@ export default function Dashboard() {
           keluar: Object.entries(skByClass).map(([kode, count]) => ({ kode, count }))
         });
 
-        const recentQ = query(
-          collection(db, 'suratMasuk'), 
-          where('sudahDisposisi', '==', false),
-          orderBy('createdAt', 'desc'), 
-          limit(5)
-        );
-        const recentSnap = await getDocs(recentQ);
+        const recentSnap = await getDocs(query(collection(db, 'suratMasuk'), where('sudahDisposisi', '==', false)));
         const recent: any[] = [];
         recentSnap.forEach(doc => recent.push({ id: doc.id, ...doc.data() }));
-        setRecentSurat(recent);
+        // Sort in memory
+        recent.sort((a, b) => {
+          const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+          const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+          return tB - tA;
+        });
+        setRecentSurat(recent.slice(0, 5));
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       }
     };
 
     fetchStats();
-  }, []);
+  }, [user?.id]); // Add user.id to dependency
 
   const [classificationStats, setClassificationStats] = useState<{masuk: any[], keluar: any[]}>({ masuk: [], keluar: [] });
 
@@ -175,6 +187,22 @@ export default function Dashboard() {
           <p className="text-muted-foreground text-[14px]">Sistem Informasi Manajemen Arsip Surat - Pengadilan Agama</p>
         </div>
       </div>
+
+      {/* Debug Section for Super Admin */}
+      {user?.email === 'Bambangnurdiann@gmail.com' && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6 text-[12px]">
+          <h4 className="font-bold text-yellow-800 mb-1 flex items-center gap-2">
+            <Info className="h-4 w-4" /> Mode Diagnostik (Hanya Bapak)
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-yellow-700">
+            <div>UID: <span className="font-mono">{user.id}</span></div>
+            <div>Level: <span className="font-bold">{user.level}</span></div>
+            <div>Email: <span className="font-mono">{user.email}</span></div>
+            <div>Database: <span className="font-mono">simars-database</span></div>
+          </div>
+          <p className="mt-2 opacity-70 italic font-medium">Jika data tetap kosong, kemungkinan Bapak sedang terhubung ke database ID yang berbeda di Firebase. Pastikan file firebase-applet-config.json sudah benar.</p>
+        </div>
+      )}
 
       {(user?.level === 'admin' || user?.level === 'super_admin') && (
         <section className="space-y-4">
